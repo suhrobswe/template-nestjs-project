@@ -11,37 +11,36 @@ export const winstonConfig = WinstonModule.createLogger({
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.ms(),
-        nestWinstonModuleUtilities.format.nestLike('MyApp', {
+        nestWinstonModuleUtilities.format.nestLike('TEMPLATE', {
           colors: true,
           prettyPrint: true,
         }),
       ),
     }),
+
     new winston.transports.DailyRotateFile({
       dirname: 'logs/error',
-      filename: 'error-%DATE%.log',
+      filename: 'critical-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       zippedArchive: true,
       maxSize: '20m',
-      maxFiles: '20d',
+      maxFiles: '30d',
       level: 'error',
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.json(),
       ),
     }),
+  ],
 
+  exceptionHandlers: [
     new winston.transports.DailyRotateFile({
-      dirname: 'logs/info',
-      filename: 'combined-%DATE%.log',
+      dirname: 'logs/exceptions',
+      filename: 'crash-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       zippedArchive: true,
       maxSize: '20m',
-      maxFiles: '20d',
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json(),
-      ),
+      maxFiles: '30d',
     }),
   ],
 });

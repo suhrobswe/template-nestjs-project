@@ -1,62 +1,28 @@
 import { FindManyOptions, ObjectLiteral, Repository } from 'typeorm';
-import { IResponsePagination } from './successResponse';
+import { IResponsePagination, IFindOptions } from './successResponse';
 import { Pager } from './Pager';
 
-export interface IFindOptions<T> {
-  relations?: string[];
-  select?: any;
-  where?: any;
-  order?: any;
-  page?: number; 
-  limit?: number; 
-  take?: number;
-  skip?: number; 
-}
-
 export class RepositoryPager {
-  public static readonly DEFAULT_PAGE = 1;
-  public static readonly DEFAULT_PAGE_SIZE = 10;
+  private static readonly DEFAULT_PAGE = 1;
+  private static readonly DEFAULT_LIMIT = 10;
 
   public static async findAll<T extends ObjectLiteral>(
     repository: Repository<T>,
-    options?: IFindOptions<T>,
-  ): Promise<IResponsePagination> {
-    const normalizedOptions = RepositoryPager.normalizePagination(options);
+    options: IFindOptions<T> = {},
+  ): Promise<IResponsePagination<T>> {
+    const page = options.page > 0 ? options.page : this.DEFAULT_PAGE;
+    const limit = options.limit > 0 ? options.limit : this.DEFAULT_LIMIT;
 
-    const [data, count] = await repository.findAndCount(normalizedOptions);
-
-    return Pager.of(
-      200,
-      {
-        uz: 'Amaliyot muvaffaqiyatli bajarildi',
-        en: 'Operation successfully completed',
-        ru: 'Операция успешно выполнена',
-      },
-      data,
-      count,
-      normalizedOptions.take || this.DEFAULT_PAGE_SIZE,
-      options?.page || this.DEFAULT_PAGE, 
-    );
-  }
-
-  private static normalizePagination<T>(
-    options?: IFindOptions<T>,
-  ): FindManyOptions<T> {
-    const page =
-      options?.page && options.page > 0
-        ? options.page
-        : RepositoryPager.DEFAULT_PAGE;
-    const limit =
-      options?.limit && options.limit > 0
-        ? options.limit
-        : RepositoryPager.DEFAULT_PAGE_SIZE;
-
-    const skip = (page - 1) * limit;
-
-    return {
-      ...options,
+    const findOptions: FindManyOptions<T> = {
+      where: options.where,
+      relations: options.relations,
+      select: options.select,
+      order: options.order,
       take: limit,
-      skip: skip,
-    } as FindManyOptions<T>;
+      skip: (page - 1) * limit,
+    };
+
+    const [data, total] = await repository.findAndCount(findOptions);
+    return Pager.of(data, total, page, limit);
   }
 }

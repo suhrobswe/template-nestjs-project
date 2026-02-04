@@ -3,13 +3,14 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
-} from '@nestjs/common';
+} from '@nestjs/core';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 import { ROLES_KEY } from '../decorator/roles.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(
@@ -17,23 +18,44 @@ export class RolesGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    if (!requiredRoles || requiredRoles.length === 0) return true;
-    const req = context.switchToHttp().getRequest();
-    const user = req.user;
+    if (!requiredRoles?.length) {
+      return true;
+    }
 
-    if (!user) throw new ForbiddenException('User not found');
+    const request = context.switchToHttp().getRequest<Request>();
+    const user = request['user'];
 
-    const hasRole = requiredRoles
-      .filter((r) => r !== 'ID')
-      .map((r) => r.toUpperCase())
-      .includes(user.role?.toUpperCase());
+    if (!user) {
+      throw new ForbiddenException('Foydalanuvchi ma’lumotlari topilmadi');
+    }
 
-    const isOwner = requiredRoles.includes('ID') && user?.id === req.params.id;
+    const hasRole = this.checkUserRole(requiredRoles, user.role);
+    const isOwner = this.checkOwnership(
+      requiredRoles,
+      user.id,
+      request.params.id,
+    );
 
     if (hasRole || isOwner) {
       return true;
     }
 
-    throw new ForbiddenException('Forbidden: insufficient permissions');
+    throw new ForbiddenException('Ruxsat etilmagan: huquqlar yetarli emas');
+  }
+
+  private checkUserRole(requiredRoles: string[], userRole: string): boolean {
+    if (!userRole) return false;
+
+    return requiredRoles
+      .filter((role) => role !== 'ID')
+      .some((role) => role.toUpperCase() === userRole.toUpperCase());
+  }
+
+  private checkOwnership(
+    requiredRoles: string[],
+    userId: string,
+    paramId: string,
+  ): boolean {
+    return requiredRoles.includes('ID') && userId === paramId;
   }
 }

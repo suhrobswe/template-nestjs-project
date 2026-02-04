@@ -21,7 +21,6 @@ interface ConfigType {
     SUPER_ADMIN_PHONE_NUMBER: string;
   };
 
-
   FRONTEND_URL: string;
   SWAGGER_URL: string;
 
@@ -38,6 +37,9 @@ interface ConfigType {
     MAIL_SECURE: boolean;
     MAIL_USER: string;
   };
+
+  FILE_UPLOAD_NAME: string;
+  BASE_URL: string;
 }
 
 const isProd = process.env.NODE_ENV === 'prod';
@@ -84,4 +86,7 @@ export const config: ConfigType = {
     MAIL_SECURE: process.env.MAIL_PORT === '465',
     MAIL_USER: String(process.env.MAIL_USER),
   },
+
+  FILE_UPLOAD_NAME: String(process.env.FILE_UPLOAD_NAME),
+  BASE_URL: String(process.env.BASE_URL),
 };

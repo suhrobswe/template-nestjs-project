@@ -1,28 +1,23 @@
-import { FindManyOptions } from 'typeorm';
-
 export interface ISuccess {
   statusCode: number;
-  message: {
-    uz: string;
-    en: string;
-    ru: string;
-  };
-  data: object;
+  message: any;
+  data: any;
 }
 
-export interface IResponsePagination extends ISuccess {
+export interface IResponsePagination<T> extends ISuccess {
   totalElements: number;
   totalPages: number;
   pageSize: number;
   currentPage: number;
   from: number;
   to: number;
+  data: T[];
 }
 
 export interface IFindOptions<T> {
-  relations?: never[];
   select?: any;
-  where?: any;
+  where?: FindOptionsWhere<T> | FindOptionsWhere<T>[];
+  relations?: string[];
   order?: any;
   page?: number;
   limit?: number;

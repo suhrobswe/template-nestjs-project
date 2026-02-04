@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   createParamDecorator,
 } from '@nestjs/common';
-import { IToken } from 'src/common/enum/token/interface';
+import { IToken } from 'src/common/interface/interface';
 
 export const GetRequestUser = createParamDecorator(
   async (data: string, context: ExecutionContext): Promise<IToken> => {
